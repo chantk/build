@@ -1,0 +1,20 @@
+# BossTV only. These symbols are what the uwe5622 Makefiles already test.
+# They are not the upstream SPARD_WLAN_SUPPORT menu, which would also select
+# AW_BIND_VERIFY on ARCH_SUNXI.
+
+config AW_WIFI_DEVICE_UWE5622
+	bool "Allwinner UWE5622 WCN BSP"
+	help
+	  Build unisocwcn as uwe5622_bsp_sdio for the BossTV SDIO WiFi.
+
+config WLAN_UWE5622
+	tristate "UWE5622 Wi-Fi (sprdwl_ng)"
+	depends on CFG80211
+	help
+	  Unisoc UWE5622 Wi-Fi. Module name sprdwl_ng.
+
+config TTY_OVERY_SDIO
+	tristate "UWE5622 Bluetooth tty (sprdbt_tty)"
+	help
+	  Unisoc SDIO Bluetooth tty. Not loaded from modules-load.d;
+	  the Bluetooth service modprobes it before hciattach.

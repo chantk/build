@@ -439,6 +439,15 @@ compile_kernel()
 		fi
 	fi
 
+	if [[ $BOARD == bosstv ]]; then
+		display_alert "Enabling" "UWE5622 WiFi and Bluetooth modules" "info"
+		cat >> .config <<- 'EOF'
+CONFIG_AW_WIFI_DEVICE_UWE5622=y
+CONFIG_WLAN_UWE5622=m
+CONFIG_TTY_OVERY_SDIO=m
+EOF
+	fi
+
 	call_extension_method "custom_kernel_config" << 'CUSTOM_KERNEL_CONFIG'
 *Kernel .config is in place, still clean from git version*
 Called after ${LINUXCONFIG}.config is put in place (.config).

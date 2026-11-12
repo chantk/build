@@ -1,0 +1,23 @@
+From: Kenneth Chan <kenneth.t.chan@gmail.com>
+Subject: [PATCH] Bluetooth: do not set HCI_LP_PARK
+
+Unisoc UWE5622 rejects the default link policy when PARK is included
+and hciattach never finishes setup. hci_setup_link_policy must not
+set HCI_LP_PARK.
+
+---
+ net/bluetooth/hci_core.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/net/bluetooth/hci_core.c b/net/bluetooth/hci_core.c
+--- a/net/bluetooth/hci_core.c
++++ b/net/bluetooth/hci_core.c
+@@ -511,8 +511,6 @@ static void hci_setup_link_policy(struct hci_request *req)
+ 		link_policy |= HCI_LP_HOLD;
+ 	if (lmp_sniff_capable(hdev))
+ 		link_policy |= HCI_LP_SNIFF;
+-	if (lmp_park_capable(hdev))
+-		link_policy |= HCI_LP_PARK;
+ 
+ 	cp.policy = cpu_to_le16(link_policy);
+ 	hci_req_add(req, HCI_OP_WRITE_DEF_LINK_POLICY, sizeof(cp), &cp);

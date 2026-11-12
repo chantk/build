@@ -383,7 +383,7 @@ compilation_prepare()
 
 
 	# Wireless drivers for Xradio XR819 chipsets
-	if linux-version compare "${version}" ge 4.19 && [[ ( "$LINUXFAMILY" == sunxi* && "$EXTRAWIFI" == yes ) || "$BOARD" == "tanix-tx6" ]]; then
+	if linux-version compare "${version}" ge 4.19 && [[ ( "$LINUXFAMILY" == sunxi* && "$EXTRAWIFI" == yes ) || "$BOARD" == "tanix-tx6" || "$BOARD" == "bosstv" ]]; then
 
 		display_alert "Adding" "Wireless drivers for Xradio XR819 chipsets" "info"
 
@@ -762,6 +762,37 @@ compilation_prepare()
 	if linux-version compare $version ge 4.4 && linux-version compare $version lt 5.8; then
 		display_alert "Adjusting" "Framebuffer driver for ST7789 IPS display" "info"
 		process_patch_file "${SRC}/patch/misc/fbtft-st7789v-invert-color.patch" "applying"
+	fi
+
+	# BossTV (Tanix TX6 / H6): USB3 DTS, UWE5622, and the Bluetooth park fix.
+	# The park patch lives under board_bosstv/ so advanced_patch does not
+	# apply it to every station-current board.
+	if [[ "$BOARD" == "bosstv" ]]; then
+		display_alert "Adding" "BossTV DTS, UWE5622, Bluetooth park fix" "info"
+		cd "$kerneldir" || exit
+
+		process_patch_file "${SRC}/patch/kernel/station-current/board_bosstv/bluetooth-hci-do-not-set-park.patch" "applying"
+
+		mkdir -p "$kerneldir/arch/arm64/boot/dts/allwinner"
+		cp "${SRC}/packages/blobs/bosstv/sun50i-h6-bosstv.dts" \
+			"$kerneldir/arch/arm64/boot/dts/allwinner/sun50i-h6-bosstv.dts"
+		if ! grep -q 'sun50i-h6-bosstv.dtb' "$kerneldir/arch/arm64/boot/dts/allwinner/Makefile"; then
+			echo 'dtb-$(CONFIG_ARCH_SUNXI) += sun50i-h6-bosstv.dtb' \
+				>> "$kerneldir/arch/arm64/boot/dts/allwinner/Makefile"
+		fi
+
+		rm -rf "$kerneldir/drivers/net/wireless/uwe5622"
+		mkdir -p "$kerneldir/drivers/net/wireless/uwe5622"
+		cp -a "${SRC}/packages/extras-buildpkgs/uwe5622/." \
+			"$kerneldir/drivers/net/wireless/uwe5622/"
+		if ! grep -q 'wireless/uwe5622/' "$kerneldir/drivers/net/wireless/Makefile"; then
+			echo 'obj-$(CONFIG_AW_WIFI_DEVICE_UWE5622) += uwe5622/' \
+				>> "$kerneldir/drivers/net/wireless/Makefile"
+		fi
+		if ! grep -q 'uwe5622/Kconfig.bosstv' "$kerneldir/drivers/net/wireless/Kconfig"; then
+			sed -i '/source "drivers\/net\/wireless\/ti\/Kconfig"/a source "drivers\/net\/wireless\/uwe5622\/Kconfig.bosstv"' \
+				"$kerneldir/drivers/net/wireless/Kconfig"
+		fi
 	fi
 
 }

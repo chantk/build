@@ -1,0 +1,17 @@
+[Unit]
+Description=Unisoc UWE5622 Bluetooth attach
+After=systemd-modules-load.service
+Wants=systemd-modules-load.service
+
+[Service]
+Type=simple
+# sprdbt_tty is not in modules-load.d. ttyBT0 does not exist until it is loaded.
+ExecStartPre=/usr/sbin/modprobe sprdbt_tty
+ExecStartPre=/bin/sleep 2
+# Do not pass -r. Initial host baud is 115200; the sprd helper then switches to 1500000.
+ExecStart=/usr/local/bin/hciattach_opi -n -s 115200 /dev/ttyBT0 sprd 1500000
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
